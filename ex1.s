@@ -105,7 +105,7 @@ _reset:
 	mov r3, #0x55555555					// turns on output for GPIO-pins 
 	str r3, [r1, #GPIO_MODEH] 
 
-	mov r4, #0x0000FF00					// sets output to on (on equals off)
+	mov r4, #0x00000000					// sets output to on (on equals off)
 	str r4, [r1, #GPIO_DOUT] 
 
 	//ACTIVATE BUTTON INPUT
@@ -123,16 +123,21 @@ _reset:
 	mov r2, #0x22222222
 	str r2, [r1, #GPIO_EXTIPSELL]
 	
-	ldr r2, =0xff
-	str r2, [r1, #GPIO_EXITIFALL]
-	str r2, [r1, #GPIO_EXITIRISE]
+	mov r2, #0xff
+	str r2, [r1, #GPIO_EXTIFALL]
+	str r2, [r1, #GPIO_EXTIRISE]
 
-	//str r2, [r1, #GPIO_IEN]
+	str r2, [r1, #GPIO_IEN]
 
-	//ldr r2, =0x802
-	//ldr r3, =ISER0
-	//str r2, [r3]
+	ldr r2, =0x802
+	ldr r3, =ISER0
+	str r2, [r3]
 
+	ldr r6, =SCR
+	mov r7, #6
+	str r7, [r6]
+	
+	wfi
 	
 	/////////////////////////////////////////////////////////////////////////////
 	//
@@ -142,11 +147,20 @@ _reset:
 	/////////////////////////////////////////////////////////////////////////////
 	
         .thumb_func
-gpio_handler:  
+gpio_handler:
+	ldr r1, =GPIO_BASE
+	ldr r2, =GPIO_PA_BASE
+	ldr r3, =GPIO_PC_BASE
+	
+	ldr r4, [r1, #GPIO_IF]  // load the source of the interrupt
+	str r4, [r1, #GPIO_IFC] //clear interrupt
+	
+	ldr r5, [r3, #GPIO_DIN]
+	lsl r5, r5,  #8
+	str r5, [r2, #GPIO_DOUT]
 
-	ldr r3, [r2, #GPIO_DIN]
-	lsl r3, r3,  #8
-	str r3, [r1, #GPIO_DOUT]
+	bx lr
+
 
 	
 	/////////////////////////////////////////////////////////////////////////////
